@@ -1,18 +1,10 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+
+from wordcloud import WordCloud
+
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-
-
-def show_tfidf(tfidf, vocab, filename):
-    # [n_doc, n_vocab]
-    plt.imshow(tfidf, cmap="YlGn", vmin=tfidf.min(), vmax=tfidf.max())
-    plt.xticks(np.arange(tfidf.shape[1]), vocab, fontsize=6, rotation=90)
-    plt.yticks(np.arange(tfidf.shape[0]), np.arange(1, tfidf.shape[0] + 1), fontsize=6)
-    plt.tight_layout()
-    plt.savefig("./results/%s.png" % filename, format="png", dpi=500)
-    plt.show()
 
 
 class TfIdfSearch:
@@ -21,8 +13,8 @@ class TfIdfSearch:
         self.doc = doc
         # print(doc.head(5))
 
+        # calculate tf-idf of texts
         self.vectorizer = TfidfVectorizer()
-
         self.tf_idf = self.vectorizer.fit_transform(self.doc)
         # print("idf: ", [(n, idf) for idf, n in zip(vectorizer.idf_, vectorizer.get_feature_names())])
         # print("v2i: ", vectorizer.vocabulary_)
@@ -30,13 +22,21 @@ class TfIdfSearch:
     def search(self):
         qtf_idf = self.vectorizer.transform([self.q])
         res = cosine_similarity(self.tf_idf, qtf_idf)
-        res = res.ravel().argsort()[-3:]
-        print("\ntop 3 closest sentences for '{}':\n{}".format(self.q, [self.doc[i] for i in res[::-1]]))
+        top3res = res.ravel().argsort()[-3:]
+        print("\ntop 3 closest sentences for '{}':\n{}".format(self.q, [self.doc[i] for i in top3res[::-1]]))
 
         i2v = {i: v for v, i in self.vectorizer.vocabulary_.items()}
-        dense_tfidf = self.tf_idf.todense()
 
-        show_tfidf(dense_tfidf, [i2v[i] for i in range(dense_tfidf.shape[1])], self.q)
+        # plot word cloud
+        zip_iterator = zip(self.doc, sum(res.tolist(), []))
+        dic = dict(zip_iterator)
+
+        wc = WordCloud(width=1920, height=1080, background_color='white', relative_scaling=0.8)
+        wcloud = wc.generate_from_frequencies(dic)
+        plt.imshow(wcloud)
+        plt.axis("off")
+        plt.show()
+        plt.savefig("./results/%s" % self.q, format="png", dpi=1080)
 
 
 if __name__ == '__main__':
