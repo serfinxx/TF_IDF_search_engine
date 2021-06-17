@@ -29,5 +29,5 @@ class TfIdfSearch:
 
 
 if __name__ == '__main__':
-    s = TfIdfSearch(doc=(pd.read_csv("./data/train.txt", sep=';').iloc[:, 0]), q="i am so excited to see it")
+    s = TfIdfSearch(doc=(pd.read_csv("../data/train.txt", sep=';').iloc[:, 0]), q="i am so excited to see it")
     s.search(0, 3)
