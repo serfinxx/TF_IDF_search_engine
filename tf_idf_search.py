@@ -1,14 +1,11 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from wordcloud import WordCloud
-
 import pandas as pd
-import matplotlib.pyplot as plt
 
 
 class TfIdfSearch:
-    def __init__(self, doc=(pd.read_csv("./data/train.txt", sep=';').iloc[:, 0]), q="i am so excited to see it"):
+    def __init__(self, doc, q):
         self.q = q
         self.doc = doc
         # print(doc.head(5))
@@ -19,26 +16,18 @@ class TfIdfSearch:
         # print("idf: ", [(n, idf) for idf, n in zip(vectorizer.idf_, vectorizer.get_feature_names())])
         # print("v2i: ", vectorizer.vocabulary_)
 
-    def search(self):
+    def search(self, start_index, end_index):
         qtf_idf = self.vectorizer.transform([self.q])
         res = cosine_similarity(self.tf_idf, qtf_idf)
-        top3res = res.ravel().argsort()[-3:]
-        print("\ntop 3 closest sentences for '{}':\n{}".format(self.q, [self.doc[i] for i in top3res[::-1]]))
+        selected = res.ravel().argsort()[::-1][start_index:end_index]
+        # print("\n{}th to {}th closest documents for '{}':\n{}".format(start_index, end_index, self.q, [self.doc[i]
+        # for i in selected]))
 
-        i2v = {i: v for v, i in self.vectorizer.vocabulary_.items()}
+        # v2i = {v: i for v, i in self.vectorizer.vocabulary_.items()}
 
-        # plot word cloud
-        zip_iterator = zip(self.doc, sum(res.tolist(), []))
-        dic = dict(zip_iterator)
-
-        wc = WordCloud(width=1920, height=1080, background_color='white', relative_scaling=0.8)
-        wcloud = wc.generate_from_frequencies(dic)
-        plt.imshow(wcloud)
-        plt.axis("off")
-        plt.show()
-        plt.savefig("./results/%s" % self.q, format="png", dpi=1080)
+        return [self.doc[i] for i in selected]
 
 
 if __name__ == '__main__':
-    s = TfIdfSearch()
-    s.search()
+    s = TfIdfSearch(doc=(pd.read_csv("./data/train.txt", sep=';').iloc[:, 0]), q="i am so excited to see it")
+    s.search(0, 3)
